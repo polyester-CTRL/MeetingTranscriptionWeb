@@ -1,0 +1,350 @@
+{% extends "layout.html" %}
+
+{% block title %}
+{{title}}
+{% endblock %}
+
+{% block headline %}
+{{ title }}
+{% endblock %}
+
+{% block content %}
+<div id="app" class="m-3">
+  <message_board />
+</div>
+
+<!-- ********************** -->
+<!-- * Component Template * -->
+<!-- ********************** -->
+
+{% raw %}
+<script type="text/x-template" id="message_board-template">
+  <div>
+  <div class="text-right h6">
+    <a href="javascript:void(0)" v-on:click="in_out_check">{{in_out}}</a>
+  </div>
+  <div class="alert alert-success p-1">
+    <h5>{{ alert_msg }}</h5>
+  </div>
+
+  <!-- Tab Panel -->
+  <ul class="nav nav-tabs" role="tablist">
+    <!-- 1つ目のタブ -->
+    <li class="nav-item">
+      <a class="nav-link active" href="#msgs" id="msg_tab_link" data-toggle="tab" role="tab">議事録</a>
+    </li>
+    <!-- 2つ目のタブ -->
+    <li class="nav-item">
+      <a class="nav-link" href="#frms" id="frm_tab_link" data-toggle="tab" role="tab">編集</a>
+    </li>
+    <!-- 3つ目のタブ -->
+    <li class="nav-item">
+      <a class="nav-link" href="#sums" id="sums_tab_link" data-toggle="tab" role="tab">要約</a>
+    </li>
+  </ul>
+
+  <!-- Tab Contents -->
+<div class="tab-content">
+  <!-- First Tab -->
+  <div class="tab-pane fade show active" id="msgs" role="tabpanel">
+    <div v-if="login_flg">
+      <h5 class="p-3 h5 text-center">
+        * 議事録 *
+      </h5>
+      <ul class="list-group list-group-flush">
+        <li v-for="item in msg_data" class="list-group-item">
+          {{item[1]}}({{item[0]}})
+        </li>
+      </ul>
+    </div>
+    <div v-if="login_flg">
+      <h5 class="mt-4">
+        認識結果:
+      </h5>
+      <div class="card mt-4">
+        <div class="card-body">
+            <div class="form-group">
+              <label for="comment"></label>
+              <div class="row">
+                <textarea type="text" class="form-control col" id="comment" name="comment" v-model="post_msg"></textarea>
+                <button v-on:click="postMsg" class="btn btn-primary col-3 col-sm-3 col-md-2 col-lg-2 col-xl-2">Post Now!</button>
+              </div>
+            </div>
+            <div>
+              <!-- ここに認識ステータスを表示 -->
+              {{ vr_status }}
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 2つ目のコンテンツ -->
+  <div class="tab-pane fade" id="frms" role="tabpanel">
+    <div v-if="login_flg">
+      <h5 class="mt-4">
+        認識結果:
+      </h5>
+      <div class="card mt-4">
+        <div class="card-body">
+            <div class="form-group">
+              <label for="comment"></label>
+              <div class="row">
+                <textarea type="text" class="form-control col" id="comment" name="comment" v-model="post_msg"></textarea>
+                <button v-on:click="postMsg" class="btn btn-primary col-3 col-sm-3 col-md-2 col-lg-2 col-xl-2">Post Now!</button>
+              </div>
+            </div>
+            <div>
+              <!-- ここに認識ステータスを表示 -->
+              {{ vr_status }}
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 3つ目のコンテンツ -->
+  <div class="tab-pane fade" id="sums" role="tabpanel">
+    <div v-if="login_flg">
+      <h5 class="p-3 h5 text-center">
+        * 議事録の要約 *
+      </h5>
+      <textarea type="text" class="form-control col" id="summary" name="summary" v-model="summary_text"></textarea>
+    </div>
+  </div>
+</div>
+
+  <!-- Login Dialog -->
+  <div class="modal fade" id="login">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="card-title">
+              {{login_msg}}
+            </h4>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="id">id</label>
+              <input type="text" class="form-control"
+              id="id" name="id" v-model="form_id">
+              <small class="form-text text-muted">
+                ※IDを入力(未登録の場合は希望のIDを入力)
+              </small>
+            </div>
+            <div class="form-group">
+              <label for="id">password</label>
+              <input type="password" class="form-control"
+              id="pass" name="pass" v-model="form_pass">
+              <small class="form-text text-muted">
+                ※パスワードを入力(未登録の場合は希望のパスワードを入力)
+              </small>
+            </div>
+            <div class="form-group">
+              <button class="btn btn-primary" v-on:click="login">login</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</script>
+{% endraw %}
+
+<!-- Component Script -->
+
+<script>
+  // message_board object
+  Vue.component('message_board', {
+    template: '#message_board-template',
+    data: function () {
+      return {
+        in_out: 'login',
+        login_flg: false,
+        login_id: '',
+        form_id: '',
+        form_pass: '',
+        login_msg: 'Login form',
+        alert_msg: 'ログインしてください',
+        post_msg: '',
+        msg_data: [],
+        vr_status: '',
+        flag_speech: false,
+        summary_text: ''
+      }
+    },
+    methods: {
+      // check login/logout
+      in_out_check: function (e) {
+        if (this.login_flg) {
+          this.logout();
+        } else {
+          this.show_login();
+        }
+      },
+      // show login dialog
+      show_login: function () {
+        this.form_id = '',
+          this.form_pass = '',
+          this.login_msg = 'Login Form:',
+          $('#login').modal('show');
+      },
+      // access server and Logged in
+      login: function (e) {
+        let formData = new FormData();
+        formData.append("id", this.form_id);
+        formData.append("pass", this.form_pass);
+        let self = this;
+        if (self.form_id == '') {
+          self.login_msg = 'IDを入力してください';
+          return;
+        }
+        $.ajax({
+          type: 'POST',
+          url: '/login',
+          data: formData,
+          processData: false,
+          contentType: false,
+
+          success: function (data) {
+            if (data == 'True') {
+              self.in_out = 'logout';
+              self.login_flg = true;
+              self.login_id = self.form_id;
+              self.alert_msg = 'ログインしました';
+              self.form_id = '';
+              self.form_pass = '';
+              $('#login').modal('hide');
+              self.getMsg();
+              self.vr_function();
+            } else {
+              self.login_msg = 'パスワードが違います'
+              self.form_pass = '';
+            }
+          },
+          error: function (request, status, err) {
+            self.login_msg = '問題が発生しました';
+          }
+        });
+      },
+
+      // logout
+      logout: function () {
+        console.log('logout');
+        this.in_out = 'login';
+        this.msg_data = [];
+        this.login_flg = false;
+        this.login_id = '';
+        this.alert_msg = '※ログアウトしました';
+      },
+
+      // post message
+      postMsg: function () {
+        let formData = new FormData();
+        formData.append("id", this.login_id);
+        formData.append("comment", this.post_msg);
+        let self = this;
+        $.ajax({
+          type: 'POST',
+          url: '/post',
+          data: formData,
+          processData: false,
+          contentType: false,
+
+          success: function (data) {
+            if (data == 'True') {
+              self.alert_msg = '※メッセージを送信しました';
+              self.getMsg();
+            }
+          },
+          error: function (request, status, err) {
+            self.alert_msg = '※メッセージ送信に問題が発生しました'
+          }
+        });
+      },
+
+      // get all messages
+      getMsg: function () {
+        let self = this;
+        $.ajax({
+          type: 'POST',
+          url: '/messages',
+          processData: false,
+          contentType: false,
+
+          success: function (data) {
+            console.log(data);
+            self.msg_data = data;
+            self.post_msg = '';
+            $('#msg_tab_link').tab('show');
+          },
+          error: function (request, status, err) {
+            self.alert_msg = '※メッセージ受信に問題が発生しました'
+          }
+        });
+      },
+      vr_function: function () {
+        window.SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
+        var recognition = new webkitSpeechRecognition();
+        recognition.lang = 'ja';
+        recognition.interimResults = true;
+        recognition.continuous = true;
+
+        let self = this;
+
+        recognition.onsoundstart = function () {
+          // document.getElementById('status').innerHTML = "認識中";
+          self.vr_status = '認識中';
+          console.log('認識中');
+        };
+        recognition.onnomatch = function () {
+          // document.getElementById('status').innerHTML = "もう一度試してください";
+          self.vr_status = 'もう一度試してください';
+          console.log('もう一度');
+        };
+        recognition.onerror = function () {
+          // document.getElementById('status').innerHTML = "エラー";
+          self.vr_status = 'エラー';
+          console.log('エラー');
+          if (self.flag_speech == false) {
+            self.vr_function();
+          }
+        };
+        recognition.onsoundend = function () {
+          // document.getElementById('status').innerHTML = "停止中";
+          self.vr_status = '停止中';
+          console.log(self.vr_status);
+          self.vr_function();
+        };
+
+        recognition.onresult = function (event) {
+          var results = event.results;
+          for (var i = event.resultIndex; i < results.length; i++) {
+            if (results[i].isFinal) {
+              // document.getElementById('result_text').innerHTML = results[i][0].transcript;
+              self.post_msg = results[i][0].transcript;
+              self.postMsg();
+              self.vr_function();
+            } else {
+              // document.getElementById('result_text').innerHTML = "[途中経過] " + results[i][0].transcript;
+              self.post_msg = '[途中経過] ' + results[i][0].transcript;
+              self.flag_speech = true;
+            }
+          }
+        }
+        self.flag_speech = false;
+        // document.getElementById('status').innerHTML = "start";
+        self.vr_status = 'start';
+        console.log(self.vr_status);
+        recognition.start();
+      }
+    },
+  });
+
+  // start Vue
+  new Vue({
+    el: '#app',
+  });
+</script>
+{% endblock %}
