@@ -133,3 +133,4 @@ dmypy.json
 
 # test 
 vr-test.html
+*.dat
