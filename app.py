@@ -43,7 +43,8 @@ def postMsg():
   global message_data
   id = request.form.get('id')
   msg = request.form.get('comment')
-  message_data.append((id, msg))
+  date = request.form.get('date')
+  message_data.append((id, msg, date))
   # if len(message_data) > 25:
     # message_data.pop(0)
   try:

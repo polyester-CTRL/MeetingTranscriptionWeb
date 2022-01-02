@@ -56,7 +56,7 @@
       </h5>
       <ul class="list-group list-group-flush">
         <li v-for="item in msg_data" class="list-group-item">
-          {{item[2]}}({{item[1]}})({{ item[0]}})
+          {{item[1]}}({{item[0]}})({{item[2]}})
         </li>
       </ul>
     </div>
@@ -260,10 +260,12 @@
       // post message
       postMsg: function () {
         let formData = new FormData();
-        formData.append("date", Date.prototype.toTimeString());
+        let date = new Date();
+        formData.append("date", date.toLocaleString("ja"));
         formData.append("id", this.login_id);
         formData.append("comment", this.post_msg);
         
+        console.log(formData.date);
         let self = this;
         $.ajax({
           type: 'POST',
@@ -294,7 +296,7 @@
           contentType: false,
 
           success: function (data) {
-            console.log(data);
+            // console.log(data);
             self.msg_data = data;
             self.post_msg = '';
             $('#msg_tab_link').tab('show');
