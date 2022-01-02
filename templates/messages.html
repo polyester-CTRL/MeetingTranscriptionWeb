@@ -41,6 +41,9 @@
     <li class="nav-item">
       <a class="nav-link" href="#sums" id="sums_tab_link" data-toggle="tab" role="tab">要約</a>
     </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#about" id="about_tab_link" data-toggle="tab" role="tab">概要</a>
+    </li>
   </ul>
 
   <!-- Tab Contents -->
@@ -53,7 +56,7 @@
       </h5>
       <ul class="list-group list-group-flush">
         <li v-for="item in msg_data" class="list-group-item">
-          {{item[1]}}({{item[0]}})
+          {{item[2]}}({{item[1]}})({{ item[0]}})
         </li>
       </ul>
     </div>
@@ -90,12 +93,8 @@
               <label for="comment"></label>
               <div class="row">
                 <textarea type="text" class="form-control col" id="comment" name="comment" v-model="post_msg"></textarea>
-                <button v-on:click="postMsg" class="btn btn-primary col-3 col-sm-3 col-md-2 col-lg-2 col-xl-2">Post Now!</button>
+                <button v-on:click="postMsg" class="btn btn-primary col-3 col-sm-3 col-md-2 col-lg-2 col-xl-2">投稿する</button>
               </div>
-            </div>
-            <div>
-              <!-- ここに認識ステータスを表示 -->
-              {{ vr_status }}
             </div>
         </div>
       </div>
@@ -110,6 +109,19 @@
       <textarea type="text" class="form-control col" id="summary" name="summary" v-model="summary_text"></textarea>
     </div>
   </div>
+  <!-- ４つ目のコンテンツ -->
+  <div class="tab-pane fade" id="about" role="tabpanel">
+    <h5 class="p-3 h5 text-center">
+      * このサイトについて *
+    </h5>
+    <div class="text-center">
+      Web Speech APIを使って音声認識を行い、その結果を自動的に記録します。<br>
+      マイクから入力された音を使用するため、このWebサイトによるマイクへのアクセスの許可が必要です。<br>
+      Google Chrome以外のブラウザでは動作しないことがあります。<br>
+      
+    </div>
+  </div>
+
 </div>
 
   <!-- Login Dialog -->
@@ -141,6 +153,11 @@
             </div>
             <div class="form-group">
               <button class="btn btn-primary" v-on:click="login">login</button>
+            </div>
+            <div class="form-group">
+              <small class="form-text text-muted">
+                ※loginボタンを押すとマイクを使った音声認識が開始します
+              </small>
             </div>
           </div>
         </div>
@@ -196,7 +213,7 @@
         formData.append("id", this.form_id);
         formData.append("pass", this.form_pass);
         let self = this;
-        if (self.form_id == '') {
+        if (self.form_id.length == 0) {
           self.login_msg = 'IDを入力してください';
           return;
         }
@@ -236,14 +253,17 @@
         this.msg_data = [];
         this.login_flg = false;
         this.login_id = '';
+        this.vr_status = false;
         this.alert_msg = '※ログアウトしました';
       },
 
       // post message
       postMsg: function () {
         let formData = new FormData();
+        formData.append("date", Date.prototype.toTimeString());
         formData.append("id", this.login_id);
         formData.append("comment", this.post_msg);
+        
         let self = this;
         $.ajax({
           type: 'POST',
