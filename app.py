@@ -33,7 +33,7 @@ def index():
   global message_data
   return render_template('messages.html', \
     login=False, \
-    title='MeetingTranscription', \
+    title='MeetingTranscriptionWeb', \
     message='Not logged in...',
     data = message_data)
 
